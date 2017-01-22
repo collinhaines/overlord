@@ -1,0 +1,116 @@
+# ---------------------------------------------
+# docker-compose
+#
+# Author:  Collin Haines
+# Updated: Jan 21, 2017
+# ---------------------------------------------
+
+version: "2"
+
+services:
+  # Configuration for https://chelseaandcollinhaines.com/
+  alliance:
+    build: "~/alliance"
+    container_name: alliance
+    depends_on:
+      - mongo
+    environment:
+      - HTTP_FORWARDED_COUNT=1
+      - MONGO_URL=mongodb://mongo:27017/alliance
+      - PORT=8080
+      - ROOT_URL=https://chelseaandcollinhaines.com/
+    links:
+      - mongo
+    ports:
+      - "127.0.0.1:8084:8080"
+    volumes:
+      - "~/alliance:/usr/src/alliance"
+
+  # Configuration for https://contextual.collinhaines.com/
+  contextual:
+    build: "~/contextual"
+    container_name: contextual
+    depends_on:
+      - mongo
+    environment:
+      - HTTP_FORWARDED_COUNT=1
+      - MONGO_URL=mongodb://mongo:27017/contextual
+      - PORT=8080
+      - ROOT_URL=https://contextual.collinhaines.com/
+    links:
+      - mongo
+    ports:
+      - "127.0.0.1:8083:8080"
+    volumes:
+      - "~/contextual:/usr/src/contextual"
+
+  # Configuration for https://jaad.collinhaines.com/
+  jaad:
+    build: "~/jaad"
+    container_name: jaad
+    depends_on:
+      - mongo
+    environment:
+      - HTTP_FORWARDED_COUNT=1
+      - MONGO_URL=mongodb://mongo:27017/jaad
+      - PORT=8080
+      - ROOT_URL=https://jaad.collinhaines.com/
+    links:
+      - mongo
+    ports:
+      - "127.0.0.1:8082:8080"
+    volumes:
+      - "~/jaad:/usr/src/jaad"
+
+  # Configuration for MongoDB.
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "127.0.0.1:27017:27017"
+
+  # Configuration for entire web server.
+  nginx:
+    container_name: nginx
+    depends_on:
+      - alliance
+      - contextual
+      - jaad
+      - pigeonhole
+      - sandbox
+    image: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "~/nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "~/nginx/conf.d/:/etc/nginx/conf.d/"
+      - "~/nginx/include.d/:/etc/nginx/include.d/"
+      - "~/nginx/ssl/:/etc/nginx/ssl/"
+
+  # Configuration for https://collinhaines.com/
+  pigeonhole:
+    build: "~/pigeonhole"
+    container_name: pigeonhole
+    depends_on:
+      - mongo
+    environment:
+      - HTTP_FORWARDED_COUNT=1
+      - MAIL_URL=smtp://postmaster@sandbox7a23a7c5f08f40298c7c0e39f4c0f306.mailgun.org:d9d8c7bc174719b85316ad0e8c6cefd4@smtp.mailgun.org:587
+      - METEOR_SETTINGS={"public":{"captchaKey":"6LdiMvISAAAAAMqH802cqy9lAZw390GdPP_b2PH7"},"private":{"captchaKey":"6LdiMvISAAAAACFJazOUaBsop4RG_5uahn8q-o3p"}}
+      - MONGO_URL=mongodb://mongo:27017/pigeonhole
+      - PORT=8080
+      - ROOT_URL=https://collinhaines.com/
+    links:
+      - mongo
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - "~/pigeonhole:/usr/src/pigeonhole"
+
+  # Configuration for https://sandbox.collinhaines.com/
+  sandbox:
+    build: "~/sandbox"
+    container_name: sandbox
+    ports:
+      - "127.0.0.1:8081:8080"
